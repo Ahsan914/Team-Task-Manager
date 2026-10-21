@@ -1,7 +1,7 @@
 
 const {
   getAllTeams, getTeam, createTeam, updateTeam, deleteTeam,
-  getAllMembers, addMember,
+  getAllMembers, addMembers,
   getAllTasks, createTask, getTask, updateTask, deleteTask,
 } = require("../controllers/controllers.js");
 const express = require("express");
@@ -17,7 +17,7 @@ router.delete("/:teamId", deleteTeam)
 
 // member
 router.get("/:teamId/members", getAllMembers)
-router.post("/:teamId/members", addMember)
+router.post("/:teamId/members", addMembers)
 
 // task
 router.get("/:teamId/tasks", getAllTasks)
