@@ -6,11 +6,12 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 dotenv.config();
 
-// const connectDB = require("./config/db.js");
+const connectDB = require("./config/db.js");
 const router = require("./routes/routes.js");
 
 const app = express();
 app.use(express.json()); //parse json body
+app.use(express.urlencoded({ extended: true }));
 app.use("/api/teams", router);
 
 if(process.env.NODE_ENV !== "production"){
@@ -31,15 +32,12 @@ if(process.env.NODE_ENV == "production"){
 dns.setServers(['1.1.1.1', '8.8.8.8']);
 const PORT = process.env.PORT || 3000;
 
-// connectDB().then( () => {
-// 	app.listen(PORT, () => {
-// 		console.log("server started on port: ", PORT);
-// 	});
-// });
-
-
-app.listen(PORT, () => {
-	console.log("server started on port: ", PORT);
+connectDB().then( () => {
+	app.listen(PORT, () => {
+		console.log("server started on port: ", PORT);
+	});
 });
+
+
 
 
