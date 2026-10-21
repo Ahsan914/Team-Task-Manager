@@ -1,12 +1,10 @@
 
+const { User, Team, Task } = require("../models/models.js");
 
 async function getAllTeams(req, res) {
 	try{
-		// const note = await Note.findById(req.params.id);
-
-		// if(!note) return res.status(404).json({message: "Note not found"});
-		// res.status(200).json(note);
-		res.status(200).json({message: "getAllTeams"});
+		const teams = await Team.find().sort({createdAt: -1}).populate("creator", "name email").populate("members", "name email");
+		res.status(200).json(teams);
 	
 	}catch(error){
 		console.error("internal server error: ", error)
@@ -15,115 +13,145 @@ async function getAllTeams(req, res) {
 }
 async function getTeam(req, res) {
 	try{
-		// const note = await Note.findById(req.params.id);
+		const team = await Team.findById(req.params.teamId).populate("creator", "name email").populate("members", "name email");
 
-		// if(!note) return res.status(404).json({message: "Note not found"});
-		// res.status(200).json(note);
-		res.status(200).json({message: "getTeam"});
-	
+		if(!team) return res.status(404).json({message: "Team not found"});
+		res.status(200).json(team);
+
 	}catch(error){
 		console.error("internal server error: ", error)
 		res.status(500).json({message: "internal server error"})
 	}
 }
+
 async function createTeam(req, res) {
 	try{
-		// const note = await Note.findById(req.params.id);
+		const {name, description} = req.body;
+		const team = new Team({name, description});
+		// const team = new Team({name, description, creator: req.user.id});
 
-		// if(!note) return res.status(404).json({message: "Note not found"});
-		// res.status(200).json(note);
-		res.status(200).json({message: "createTeam"});
-	
+		const savedTeam = await team.save();
+		res.status(201).json(savedTeam);
+
 	}catch(error){
 		console.error("internal server error: ", error)
 		res.status(500).json({message: "internal server error"})
 	}
 }
+
 async function updateTeam(req, res) {
 	try{
-		// const note = await Note.findById(req.params.id);
+		const {name, description} = req.body;
+		const updatedTeam = await Team.findByIdAndUpdate(
+			req.params.teamId, {name, description}, {returnDocument: "after"}
+		);
 
-		// if(!note) return res.status(404).json({message: "Note not found"});
-		// res.status(200).json(note);
-		res.status(200).json({message: "updateTeam"});
+		if(!updatedTeam) return res.status(404).json({message: "Team not found"});
+		res.status(200).json(updatedTeam);
 	
 	}catch(error){
 		console.error("internal server error: ", error)
 		res.status(500).json({message: "internal server error"})
 	}
 }
+
 async function deleteTeam(req, res) {
 	try{
-		// const note = await Note.findById(req.params.id);
+		
+		const team = await Team.findById(req.params.teamId);
+		if (!team) {
+			return res.status(404).json({
+				message: "Team not found"
+			});
+		}
 
-		// if(!note) return res.status(404).json({message: "Note not found"});
-		// res.status(200).json(note);
-		res.status(200).json({message: "deleteTeam"});
+		await Task.deleteMany({ team: team._id });
+		await Team.findByIdAndDelete(team._id);
+
+		res.status(200).json({message: "Team deleted successfully"});
 	
 	}catch(error){
 		console.error("internal server error: ", error)
 		res.status(500).json({message: "internal server error"})
 	}
 }
+
 async function getAllMembers(req, res) {
 	try{
-		// const note = await Note.findById(req.params.id);
-
-		// if(!note) return res.status(404).json({message: "Note not found"});
-		// res.status(200).json(note);
-		res.status(200).json({message: "getAllMembers"});
+		const team = await Team.findById(req.params.teamId).populate({ 
+			path: "members", 
+			select: "name email", 
+			options: { sort: { name: 1 } } 
+		});
+		
+		if(!team) return res.status(404).json({message: "Team not found"});
+		res.status(200).json(team.members);
 	
 	}catch(error){
 		console.error("internal server error: ", error)
 		res.status(500).json({message: "internal server error"})
 	}
 }
-async function addMember(req, res) {
+async function addMembers(req, res) {
 	try{
-		// const note = await Note.findById(req.params.id);
+		const {userIds} = req.body;
+		const updatedTeam = await Team.findByIdAndUpdate(
+			req.params.teamId, 
+			{ $addToSet: { members: {$each: userIds} } }, 
+			{returnDocument: "after", runValidators: true}
+		);
 
-		// if(!note) return res.status(404).json({message: "Note not found"});
-		// res.status(200).json(note);
-		res.status(200).json({message: "addMember"});
+		if(!updatedTeam) return res.status(404).json({message: "Team not found"});
+		res.status(201).json(updatedTeam);
 	
 	}catch(error){
 		console.error("internal server error: ", error)
 		res.status(500).json({message: "internal server error"})
 	}
 }
+
 async function getAllTasks(req, res) {
 	try{
-		// const note = await Note.findById(req.params.id);
-
-		// if(!note) return res.status(404).json({message: "Note not found"});
-		// res.status(200).json(note);
-		res.status(200).json({message: "getAllTasks"});
+		const tasks = await Task.find({team: req.params.teamId}).populate("assignedTo", "name email").sort({createdAt: -1});
+		res.status(200).json(tasks);
 	
 	}catch(error){
 		console.error("internal server error: ", error)
 		res.status(500).json({message: "internal server error"})
 	}
 }
+
 async function createTask(req, res) {
 	try{
-		// const note = await Note.findById(req.params.id);
+		const {name, description, dueDate} = req.body;
 
-		// if(!note) return res.status(404).json({message: "Note not found"});
-		// res.status(200).json(note);
-		res.status(200).json({message: "createTask"});
+		const team = await Team.findById(req.params.teamId);
+		if (!team) {
+		return res.status(404).json({
+			message: "Team not found"
+		});
+		}
+
+		const task = new Task({name, description, dueDate, team: team._id});
+
+		const savedTask = await task.save();
+		res.status(201).json(savedTask);
 	
 	}catch(error){
 		console.error("internal server error: ", error)
 		res.status(500).json({message: "internal server error"})
 	}
 }
+
 async function getTask(req, res) {
 	try{
-		// const note = await Note.findById(req.params.id);
+		const task = await Task.findOne({
+			_id: req.params.taskId,
+			team: req.params.teamId
+		}).populate("assignedTo", "name email");
 
-		// if(!note) return res.status(404).json({message: "Note not found"});
-		// res.status(200).json(note);
-		res.status(200).json({message: "getTask"});
+		if(!task) return res.status(404).json({message: "Task not found"});
+		res.status(200).json(task);
 	
 	}catch(error){
 		console.error("internal server error: ", error)
@@ -132,24 +160,43 @@ async function getTask(req, res) {
 }
 async function updateTask(req, res) {
 	try{
-		// const note = await Note.findById(req.params.id);
+		const {name, description, dueDate} = req.body;
 
-		// if(!note) return res.status(404).json({message: "Note not found"});
-		// res.status(200).json(note);
-		res.status(200).json({message: "updateTask"});
+		const team = await Team.findById(req.params.teamId);
+		if (!team) {
+		return res.status(404).json({
+			message: "Team not found"
+		});
+		}
+
+		const updatedTask = await Task.findByIdAndUpdate(
+			req.params.taskId,
+			{name, description, dueDate},
+			{returnDocument: "after", runValidators: true}
+		);
+
+		if(!updatedTask) return res.status(404).json({message: "Task not found"});
+		res.status(200).json(updatedTask);
 	
 	}catch(error){
 		console.error("internal server error: ", error)
 		res.status(500).json({message: "internal server error"})
 	}
 }
+
 async function deleteTask(req, res) {
 	try{
-		// const note = await Note.findById(req.params.id);
+		const team = await Team.findById(req.params.teamId);
+		if (!team) {
+			return res.status(404).json({
+				message: "Team not found"
+			});
+		}
 
-		// if(!note) return res.status(404).json({message: "Note not found"});
-		// res.status(200).json(note);
-		res.status(200).json({message: "deleteTask"});
+		const task = await Task.findByIdAndDelete(req.params.taskId);
+
+		if(!task) return res.status(404).json({message: "Task not found"});
+		res.status(200).json({message: "Task deleted successfully"});
 	
 	}catch(error){
 		console.error("internal server error: ", error)
@@ -160,6 +207,6 @@ async function deleteTask(req, res) {
 
 module.exports = {
 	getAllTeams, getTeam, createTeam, updateTeam, deleteTeam,
-	getAllMembers, addMember, 
+	getAllMembers, addMembers, 
 	getAllTasks, createTask, getTask, updateTask, deleteTask
 };
