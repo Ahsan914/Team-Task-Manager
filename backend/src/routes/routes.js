@@ -1,4 +1,5 @@
 
+const requireAuth = require("../middleware/authMiddleware.js");
 const {
   getAllTeams, getTeam, createTeam, updateTeam, deleteTeam,
   getAllMembers, addMembers,
@@ -8,23 +9,23 @@ const express = require("express");
 const router = express.Router();
 
 // team
-router.get("/", getAllTeams)
+router.get("/", requireAuth, getAllTeams)
 
-router.get("/:teamId", getTeam)
-router.post("/", createTeam)
-router.put("/:teamId", updateTeam)
-router.delete("/:teamId", deleteTeam)
+router.get("/:teamId", requireAuth, getTeam)
+router.post("/", requireAuth, createTeam)
+router.put("/:teamId", requireAuth, updateTeam)
+router.delete("/:teamId", requireAuth, deleteTeam)
 
 // member
-router.get("/:teamId/members", getAllMembers)
-router.post("/:teamId/members", addMembers)
+router.get("/:teamId/members", requireAuth, getAllMembers)
+router.post("/:teamId/members", requireAuth, addMembers)
 
 // task
-router.get("/:teamId/tasks", getAllTasks)
-router.post("/:teamId/tasks", createTask)
+router.get("/:teamId/tasks", requireAuth, getAllTasks)
+router.post("/:teamId/tasks", requireAuth, createTask)
 
-router.get("/:teamId/tasks/:taskId", getTask)
-router.put("/:teamId/tasks/:taskId", updateTask)
-router.delete("/:teamId/tasks/:taskId", deleteTask)
+router.get("/:teamId/tasks/:taskId", requireAuth, getTask)
+router.put("/:teamId/tasks/:taskId", requireAuth, updateTask)
+router.delete("/:teamId/tasks/:taskId", requireAuth, deleteTask)
 
 module.exports = router;
