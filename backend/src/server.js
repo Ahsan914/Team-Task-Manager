@@ -4,7 +4,7 @@ const dns = require("node:dns");
 const express = require("express");
 const cors = require("cors");
 const session = require("express-session");
-const MongoStore = require("connect-mongo");
+const MongoStore = require("connect-mongo").default;
 const passport = require("passport");
 const dotenv = require("dotenv");
 
