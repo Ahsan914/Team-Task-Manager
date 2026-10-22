@@ -27,8 +27,7 @@ async function getTeam(req, res) {
 async function createTeam(req, res) {
 	try{
 		const {name, description} = req.body;
-		const team = new Team({name, description});
-		// const team = new Team({name, description, creator: req.user.id});
+		const team = new Team({name, description, creator: req.user.id});
 
 		const savedTeam = await team.save();
 		res.status(201).json(savedTeam);
