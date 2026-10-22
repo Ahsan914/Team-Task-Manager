@@ -25,17 +25,21 @@ async function getTeam(req, res) {
 }
 
 async function createTeam(req, res) {
-	try{
-		const {name, description} = req.body;
-		const team = new Team({name, description, creator: req.user.id});
+  try {
+    const { name, description } = req.body;
 
-		const savedTeam = await team.save();
-		res.status(201).json(savedTeam);
+    const team = new Team({
+      name,
+      description,
+      creator: req.user._id,
+    });
 
-	}catch(error){
-		console.error("internal server error: ", error)
-		res.status(500).json({message: "internal server error"})
-	}
+    const savedTeam = await team.save();
+    res.status(201).json(savedTeam);
+  } catch (error) {
+    console.error("internal server error: ", error);
+    res.status(500).json({ message: "internal server error" });
+  }
 }
 
 async function updateTeam(req, res) {
@@ -95,7 +99,7 @@ async function addMembers(req, res) {
 	try{
 		const {userIds} = req.body;
 		const updatedTeam = await Team.findByIdAndUpdate(
-			req.params.teamId, 
+			req.team._id, 
 			{ $addToSet: { members: {$each: userIds} } }, 
 			{returnDocument: "after", runValidators: true}
 		);
@@ -124,14 +128,7 @@ async function createTask(req, res) {
 	try{
 		const {name, description, dueDate} = req.body;
 
-		const team = await Team.findById(req.params.teamId);
-		if (!team) {
-		return res.status(404).json({
-			message: "Team not found"
-		});
-		}
-
-		const task = new Task({name, description, dueDate, team: team._id});
+		const task = new Task({name, description, dueDate, team: req.team._id});
 
 		const savedTask = await task.save();
 		res.status(201).json(savedTask);
@@ -161,17 +158,13 @@ async function updateTask(req, res) {
 	try{
 		const {name, description, dueDate} = req.body;
 
-		const team = await Team.findById(req.params.teamId);
-		if (!team) {
-		return res.status(404).json({
-			message: "Team not found"
-		});
-		}
-
-		const updatedTask = await Task.findByIdAndUpdate(
-			req.params.taskId,
-			{name, description, dueDate},
-			{returnDocument: "after", runValidators: true}
+		const updatedTask = await Task.findOneAndUpdate(
+		{
+			_id: req.params.taskId,
+			team: req.team._id,
+		},
+		{ name, description, dueDate },
+		{ returnDocument: "after", runValidators: true }
 		);
 
 		if(!updatedTask) return res.status(404).json({message: "Task not found"});
@@ -185,14 +178,10 @@ async function updateTask(req, res) {
 
 async function deleteTask(req, res) {
 	try{
-		const team = await Team.findById(req.params.teamId);
-		if (!team) {
-			return res.status(404).json({
-				message: "Team not found"
-			});
-		}
-
-		const task = await Task.findByIdAndDelete(req.params.taskId);
+		const task = await Task.findOneAndDelete({
+			_id: req.params.taskId,
+			team: req.team._id
+		});
 
 		if(!task) return res.status(404).json({message: "Task not found"});
 		res.status(200).json({message: "Task deleted successfully"});
