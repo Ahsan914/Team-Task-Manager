@@ -43,20 +43,20 @@ const teamSchema = mongoose.Schema(
 		name: {
 			type: String,
 			required: true,
-            trim: true,
+      trim: true,
 		},
 
-        description: {
-			type: String,
-            trim: true,
-			default: "",
+    description: {
+      type: String,
+      trim: true,
+      default: "",
 		},
 
-        creator: {
-            type: mongoose.Schema.Types.ObjectId,
-            default: null,
-            ref: "User",
-        },
+    creator: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: "User",
+    },
         
 		members: {
 			type: [mongoose.Schema.Types.ObjectId],
@@ -71,31 +71,31 @@ const taskSchema = mongoose.Schema(
 		name: {
 			type: String,
 			required: true,
-            trim: true,
+      trim: true,
 		},
 
 		description: {
 			type: String,
-            trim: true,
+      trim: true,
 			default: "",
 		},
 
-        team: {
-            type: mongoose.Schema.Types.ObjectId,
-            required: true,
-            ref: "Team",
-        },
+    team: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: "Team",
+    },
 
-        assignedTo: {
-            type: [mongoose.Schema.Types.ObjectId],
-            ref: "User",
-            default: [],
-        },
+    assignedTo: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "User",
+      default: [],
+    },
         
-        status: {
-            type: String,
-            default: "todo",
-        },
+    status: {
+      type: String,
+      default: "todo",
+    },
         
 		dueDate: {
 			type: Date,
