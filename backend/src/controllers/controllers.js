@@ -125,18 +125,70 @@ async function getAllTasks(req, res) {
 }
 
 async function createTask(req, res) {
-	try{
-		const {name, description, dueDate} = req.body;
+  try {
+    const { 
+		name, 
+		description, 
+		dueDate, 
+		assignedTo, 
+		status 
+	} = req.body;
 
-		const task = new Task({name, description, dueDate, team: req.team._id});
+    const allowedStatuses = ["todo", "in-progress", "completed"];
 
-		const savedTask = await task.save();
-		res.status(201).json(savedTask);
-	
-	}catch(error){
-		console.error("internal server error: ", error)
-		res.status(500).json({message: "internal server error"})
-	}
+    if (status && !allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        message: "Invalid task status",
+      });
+    }
+
+    const userIds = assignedTo || [];
+
+    if (!Array.isArray(userIds)) {
+      return res.status(400).json({
+        message: "assignedTo must be an array of user IDs",
+      });
+    }
+
+    const team = await Team.findById(req.team._id);
+
+    const members = team.members.map((id) => id.toString());
+
+    const invalidMembers = userIds.some(
+      (id) => !members.includes(id.toString())
+    );
+
+    if (invalidMembers) {
+      return res.status(400).json({
+        message: "Tasks can only be assigned to team members",
+      });
+    }
+
+    if (dueDate && isNaN(Date.parse(dueDate))) {
+      return res.status(400).json({
+        message: "Invalid due date",
+      });
+    }
+
+    const task = new Task({
+      name,
+      description,
+      dueDate: dueDate || null,
+      assignedTo: userIds,
+      status: status,
+      team: req.team._id,
+    });
+
+    const savedTask = await task.save();
+    res.status(201).json(savedTask);
+
+} catch (error) {
+    console.error("internal server error: ", error);
+
+    res.status(500).json({
+      message: "internal server error",
+    });
+  }
 }
 
 async function getTask(req, res) {
@@ -154,26 +206,81 @@ async function getTask(req, res) {
 		res.status(500).json({message: "internal server error"})
 	}
 }
+
 async function updateTask(req, res) {
-	try{
-		const {name, description, dueDate} = req.body;
+  try {
+    const { name, description, dueDate, assignedTo, status } = req.body;
 
-		const updatedTask = await Task.findOneAndUpdate(
-		{
-			_id: req.params.taskId,
-			team: req.team._id,
-		},
-		{ name, description, dueDate },
-		{ returnDocument: "after", runValidators: true }
-		);
+    const allowedStatuses = ["todo", "in-progress", "completed"];
 
-		if(!updatedTask) return res.status(404).json({message: "Task not found"});
-		res.status(200).json(updatedTask);
-	
-	}catch(error){
-		console.error("internal server error: ", error)
-		res.status(500).json({message: "internal server error"})
-	}
+    if ( status && !allowedStatuses.includes(status) ) {
+      return res.status(400).json({
+        message: "Invalid task status",
+      });
+    }
+
+    const task = await Task.findOne({
+      _id: req.params.taskId,
+      team: req.team._id,
+    });
+
+    if (!task) {
+      return res.status(404).json({
+        message: "Task not found",
+      });
+    }
+
+    if (name) task.name = name;
+    if (description) task.description = description;
+
+    if (dueDate) {
+      if (dueDate && isNaN(Date.parse(dueDate))) {
+        return res.status(400).json({
+          message: "Invalid due date",
+        });
+      }
+
+      task.dueDate = dueDate || null;
+    }
+
+    if (status) {
+      task.status = status;
+    }
+
+    if (assignedTo) {
+      if (!Array.isArray(assignedTo)) {
+        return res.status(400).json({
+          message: "assignedTo must be an array of user IDs",
+        });
+      }
+
+      const team = await Team.findById(req.team._id);
+
+      const members = team.members.map((id) => id.toString());
+
+      const invalidMembers = assignedTo.some(
+        (id) => !members.includes(id.toString())
+      );
+
+      if (invalidMembers) {
+        return res.status(400).json({
+          message: "Tasks can only be assigned to team members",
+        });
+      }
+
+      task.assignedTo = assignedTo;
+    }
+
+    const updatedTask = await task.save();
+
+    res.status(200).json(updatedTask);
+  } catch (error) {
+    console.error("internal server error: ", error);
+
+    res.status(500).json({
+      message: "internal server error",
+    });
+  }
 }
 
 async function deleteTask(req, res) {
