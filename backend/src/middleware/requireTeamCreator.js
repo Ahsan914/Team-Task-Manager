@@ -1,4 +1,3 @@
-
 const { Team } = require("../models/models.js");
 
 async function requireTeamCreator(req, res, next) {
@@ -11,18 +10,26 @@ async function requireTeamCreator(req, res, next) {
       });
     }
 
-    // Check whether the logged-in user created this team.
-    if (team.creator.toString() !== req.user._id.toString()) {
+    if (!team.creator || !req.user?._id) {
       return res.status(403).json({
-        message: "Only the team creator can manage its tasks and members",
+        message: "You are not authorized to manage this team",
       });
     }
 
-    // Pass the team along so the controller can reuse it.
+    if (team.creator.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        message: "Only the team creator can manage this team",
+      });
+    }
+
     req.team = team;
     next();
   } catch (error) {
-    next(error);
+    console.error("requireTeamCreator error:", error);
+
+    return res.status(500).json({
+      message: "Internal server error",
+    });
   }
 }
 
